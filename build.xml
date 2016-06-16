@@ -1,0 +1,160 @@
+<project name="MessageParser" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" default="help">
+	<description>
+		Tool to parse log4j error messages.
+	</description>
+
+	<property name="main-class"  value="it.csttech.MessageParser"/>
+
+	<property name="src.dir"      value="${basedir}/src"/>
+	<property name="build.dir"    value="${basedir}/bin"/>
+	<property name="doc.dir"      value="${basedir}/docs"/>
+	<property name="lib.dir"      value="${basedir}/lib"/>
+	<property name="classes.dir"  value="${build.dir}"/>
+	<!-- property name="jar.dir"      value="${build.dir}/publish"/-->
+	<!-- property name="cfg.dir"	    value="${basedir}/cfg"/-->
+	<property name="ivy.dep.file" value="${basedir}/dependencies.xml"/>
+	<!--property name="dist.dir"     value="${basedir}/dist"/>
+	<property name="distlib.dir"  value="${dist.dir}/lib"/>
+	<property name="distcfg.dir"  value="${dist.dir}/cfg"/>
+	<property name="distbin.dir"  value="${dist.dir}/bin"/-->
+
+	<property name="libset.dir" value="${lib.dir}" relative="yes" />
+
+	<!--	<property file="build.properties" />	-->
+
+	<!-- Define the ClassPath -->
+	<path id="classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${jar.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<path id="lib.classpath">
+		<fileset dir="${libset.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!-- convert build.classpath to mf.classpath (the string needed for the manifest task) -->
+	<pathconvert property="mf.classpath" pathsep=" ">
+		<path refid="lib.classpath" />
+		<globmapper from="${basedir}${file.separator}*" to="..${file.separator}*" />
+	</pathconvert>
+	<echo message="Checking available libraries: ${mf.classpath}" />
+
+	<target name="clean" description="Tidy up the workspace">
+		<delete failonerror="false" dir="${build.dir}"/>
+		<!--delete failonerror="false" dir="ivy-report"/-->
+		<!--delete failonerror="false" dir="${dist.dir}"/-->
+		<delete>
+			<fileset defaultexcludes="no" dir="${src.dir}" includes="**/*~"/>
+		</delete>
+	</target>
+
+	<target name="init" depends="clean" description="Setup project directories"> 
+		<mkdir dir="${classes.dir}"/>
+		<!--mkdir dir="${jar.dir}" />
+		<mkdir dir="${doc.dir}"/ -->
+	</target>
+
+	<target name="compile" depends="init" description="Compile java sources" > <!-- target name="compile" depends="init, ivy-retrieve" description="Compile java sources" -->
+		<javac includeantruntime="false" srcdir="${src.dir}" destdir="${classes.dir}"> <!-- javac includeantruntime="false" srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath"-->
+			<compilerarg value="-Xlint:all"/>
+		</javac>
+	</target>
+
+	<!--
+	<target name="jar" depends="compile" description="Create .jar file of the project">
+		<mkdir dir="${jar.dir}"/>
+		<jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="help">
+		<java classname="org.apache.tools.ant.Main" description="Print ant guide" >
+			<arg value="-projecthelp" />
+		</java>
+	</target>
+	-->
+
+	<target name="doc" description="Generate documentation JavaDoc" >
+		<delete failonerror="false" dir="${doc.dir}"/>
+		<javadoc sourcepath="${src.dir}" destdir="${doc.dir}">
+			<bottom><![CDATA[<i>Copyright &#169; 2016 Dummy Corp. All Rights Reserved.</i>]]></bottom>
+			<!-- Custom tags -->
+			<tag name="todo." scope="all" description="To do:"/>
+			<classpath>
+				<fileset dir="${lib.dir}">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+		</javadoc>
+	</target>
+
+	<!-- IVY TARGETS 
+	<target name="ivy-report">
+		<ivy:configure override="true" file="${ivy.install.dir}/ivy-settings.xml" />
+		<mkdir dir="ivy-report" />
+		<ivy:resolve file="${ivy.dep.file}" haltonfailure="false" />
+		<ivy:report todir="ivy-report" />
+	</target>
+
+	<target name="ivy-retrieve" description="Download dependecies." >
+		<ivy:configure override="true" file="${ivy.install.dir}/ivy-settings.xml" />
+		<ivy:retrieve sync="true" conf="*" type="jar,bundle" pattern="${lib.dir}/[artifact]-[revision].[ext]" />
+	</target>
+
+	<target name="ivy-retrieve-runtime">
+		<ivy:configure override="true" file="${ivy.install.dir}/ivy-settings.xml" />
+		<ivy:retrieve sync="true" conf="runtime" type="jar,bundle" pattern="build/lib-runtime/[artifact]-[revision].[ext]" />
+	</target>
+
+	<target name="ivy-retrieve-jar">
+		<ivy:configure override="true" file="${ivy.install.dir}/ivy-settings.xml" />
+		<ivy:retrieve sync="true" type="jar,bundle" pattern="build/lib/[artifact].[ext]" conf="provided" />
+	</target>
+
+	<target name="ivy-release" depends="ivy-retrieve">
+		<ivy:configure override="true" file="${ivy.install.dir}/ivy-settings.xml" />
+		<fail message="No ivy resolver selected" unless="ivy.resolver" />
+		<ivy:publish artifactspattern="${basedir}/${dir.publish}/[artifact]-[revision].[ext]" resolver="${ivy.resolver}" pubrevision="${version}" status="release" overwrite="true" />
+	</target>
+
+	<target name="ivy-cleancache">
+		<ivy:cleancache />
+	</target>
+	-->
+
+	<!-- GENERATE DIST FOLDER FOR RELEASE
+	<target name="dist" depends="compile" description="Does all what is needed to distrubute the result.">
+		<mkdir dir="${dist.dir}"/>
+		<mkdir dir="${distlib.dir}"/>
+		<mkdir dir="${distcfg.dir}"/>
+		<mkdir dir="${distbin.dir}"/>
+		<jar destfile="${distbin.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main-class}"/>
+				<attribute name="Class-Path" value="${mf.classpath}" />
+			</manifest>
+		</jar>
+		<copydir src="${cfg.dir}" dest="${distcfg.dir}"/>
+		<copydir src="${lib.dir}" dest="${distlib.dir}"/>
+		<copy file="${basedir}\README.md" tofile="${dist.dir}\README.md"/>
+		<copy file="${basedir}\run.bat" tofile="${dist.dir}\run.bat"/>
+		<copy file="${basedir}\run.sh" tofile="${dist.dir}\run.sh"/>
+		<exec executable="rm" osfamily="UNIX">
+			<arg line="${dist.dir}/run.sh"/>
+		</exec>
+        <exec executable="cp" osfamily="UNIX">
+            <arg line="${basedir}/run.sh ${dist.dir}/run.sh"/>
+        </exec>
+	</target>
+	-->
+
+</project>
