@@ -9,7 +9,12 @@ public class SimpleTester {
   private static MessageParser messageParser;
 
   public static void main(String[] args) {
-    String testingMode = args[0];
+    String testingMode;
+    if (args.length == 0) {
+      String testingMode = "1";
+    } else {
+      String testingMode = args[0];
+    }
     messageParser = new Log4jMessageParser(FILE_NAME,REGEX);
     switch (testingMode) {
       case "0": MethodZero( args[1], args[2] );
