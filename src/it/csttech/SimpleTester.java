@@ -11,9 +11,9 @@ public class SimpleTester {
   public static void main(String[] args) {
     String testingMode;
     if (args.length == 0) {
-      String testingMode = "1";
+      testingMode = "1";
     } else {
-      String testingMode = args[0];
+      testingMode = args[0];
     }
     messageParser = new Log4jMessageParser(FILE_NAME,REGEX);
     switch (testingMode) {
