@@ -11,7 +11,7 @@ public class SimpleTester {
   public static void main(String[] args) {
     String testingMode;
     if (args.length == 0) {
-      testingMode = "1";
+      testingMode = "2";
     } else {
       testingMode = args[0];
     }
@@ -20,6 +20,8 @@ public class SimpleTester {
       case "0": MethodZero( args[1], args[2] );
       break;
       case "1": MethodOne();
+      break;
+      case "2": MethodTwo();
       break;
       default: System.out.println("Method number not recognized.");
       break;
@@ -80,6 +82,12 @@ public class SimpleTester {
       }
       System.out.println(output);
     }
+  }
+
+  private static void MethodTwo(){
+    System.out.println(messageParser.nextMessage());
+    System.out.println(messageParser.nextMessage());
+    System.out.println(messageParser.prevMessage());
   }
 
 }
