@@ -5,7 +5,7 @@ import java.util.*;
 public class SimpleTester {
 
   private static final String REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}";
-  private static final String FILE_NAME = "input/phoenix-develop-2016-06-09-1.log";
+  private static final String FILE_NAME = "input/input.log"; // "input/phoenix-develop-2016-06-09-1.log";
   private static MessageParser messageParser;
 
   public static void main(String[] args) {
@@ -57,6 +57,7 @@ public class SimpleTester {
       System.out.println(message);
       boolean direction = random.nextBoolean();
       message = basicOperation(direction?"1":"-1");
+      System.out.println(direction?"Avanti":"Indietro");
     }
     return;
   }
