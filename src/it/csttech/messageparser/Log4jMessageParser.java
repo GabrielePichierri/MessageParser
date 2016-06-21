@@ -72,6 +72,7 @@ public class Log4jMessageParser implements MessageParser {
 
 				if(currentChar == '\n' || currentChar == '\r') {
 					line.append((char) currentChar);
+					System.out.println("Abbiamo trovato un a capo.");
 					break;
 				} else {
 					line.append((char) currentChar);
@@ -88,28 +89,30 @@ public class Log4jMessageParser implements MessageParser {
 
 
 			if(currentChar == '\r') {
+			System.out.println("Questo a capo era di tipo r.");
 				//TODO: l'ho tolto perché non mi è chiaro per niente, forse serve.
 				byteBuffer.rewind();
 				char nextChar = (char) fileChannel.read(byteBuffer);
 								if(nextChar == '\n') {
+									System.out.println("... seguito da un n.");
 				         //Then we found a '\r' followed by a '\n'
 				         //we ignore it and increase the position by one
-				         position = fileChannel.position();
-				         } else {
+				         	} else {
+									 System.out.println("... non seguito da un n.");
 				         //Then we had only found a '\r' and the next character is not '\n';
 				         //Return to the previous position for the next read							// SamCle: why?
-				         position--;
+				         // position--;
+				         fileChannel.position(fileChannel.position() - 1);
 							 }
-
+							 position = fileChannel.position();  //update this object's position with the fileChannel position
 			}
 		} catch (IOException e) {
 			//Never(!) happens: main method should avoid any errors
 			System.out.println("I/O Exception: " + e);
 			return null;
 		}
-//		position++; // This helps in poassing to the next line, otherwise this method would always stop at the same line.
 		return line; //TOCHECK
-	}
+		}
 
 	private boolean isStartOfMessage(StringBuffer line) {
 		Pattern pattern = Pattern.compile(regex);
