@@ -42,7 +42,7 @@ public class Log4jMessageParser implements MessageParser {
 			} else if ( isStartOfMessage(line) ) {
 				break;
 			} else {
-				message = message.append(line).append("\n");
+				message = message.append(line); //.append("\n");
 			}
 		}
 		return message.toString();
