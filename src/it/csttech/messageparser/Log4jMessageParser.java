@@ -17,7 +17,7 @@ public class Log4jMessageParser implements MessageParser {
 	}
 
 	public Log4jMessageParser(String filename, String regex, long position) {
-		this.regex = regex; // + ".*";
+		this.regex = regex;
 		file = Paths.get(filename);
 		this.position = position;
 	}
@@ -25,34 +25,54 @@ public class Log4jMessageParser implements MessageParser {
 	public String nextMessage(){
 		StringBuffer line = new StringBuffer();
 		StringBuffer message = new StringBuffer();
+		long positionSaver = position;
 		do {
 			line = readLine();
 			if ( line == null) {
 				// Then it's EOF.
 				return null;
-			}
+			} else { }
 		} while ( ! isStartOfMessage(line) ); // Start of message found!
 		message = message.append(line);
 		while (true) {
 			line = readLine();
 			if ( line == null ) {
 				break;
-			} else if ( isStartOfMessage(line) ) {
-				break;
-			} else {
+			} else if ( ! isStartOfMessage(line) ) {
 				message = message.append(line);
+				positionSaver = position;
+			} else {
+				setPosition( positionSaver );
+				break;
 			}
 		}
 		return message.toString();
 	}
 
 	public String prevMessage() {
-		//TODO
-		if(position == 0) return "BOF";
-		return "textPrevMessage";
+		for (int i = 0; i < 2; i++) {
+			if (position == 0) {
+				//then we already are at the BOF; return null
+				return null;
+			}
+
+			retrieveLineBeginPosition();
+			long positionSaver = position; //stores the position of the first character of a line
+
+			while( ! isStartOfMessage(readLine())) {
+				//then this line is not a start of a message
+				position = positionSaver--; //position yourself to the previous character, belonging to the previous line
+				retrieveLineBeginPosition(); //move to the beginning of such line
+				positionSaver = position; //re-store the position of the first character of such line
+			}
+			//we found the start of a message? TODO SOLVE THIS!
+			setPosition(positionSaver);
+		}
+		return nextMessage();
 	}
 
 	private StringBuffer readLine() {
+
 		ByteBuffer byteBuffer;
 		StringBuffer line;
 
@@ -81,7 +101,7 @@ public class Log4jMessageParser implements MessageParser {
 			}
 
 			//If it's not the end of file:
- 			if(currentChar == '\r') {
+			if(currentChar == '\r') {
 				byteBuffer.rewind();
 				char nextChar = (char) fileChannel.read(byteBuffer);
 				if(nextChar == '\n') {
@@ -93,7 +113,7 @@ public class Log4jMessageParser implements MessageParser {
 					fileChannel.position(fileChannel.position() - 1);
 				}
 			}
-			
+
 			setPosition( fileChannel.position() );  //update this object's position with the fileChannel position
 		} catch (IOException e) {
 			//Never(!) happens: main method should avoid any errors
@@ -117,68 +137,78 @@ public class Log4jMessageParser implements MessageParser {
 		position = newPosition;
 	}
 
-	private long retrieveLineBeginPosition(){ // TODO: finire
-		if ( position <= 0 ) {
-			return -1;
-		} else {
-			ByteBuffer byteBuffer;
-			try (FileChannel fileChannel = FileChannel.open(file, StandardOpenOption.READ)) {
-				fileChannel.position(position);
-				byteBuffer = ByteBuffer.allocate(1);
-				int currentChar = -1;
+	//This method is not called if position = 0;
+	private void retrieveLineBeginPosition(){
 
-				while(fileChannel.read(byteBuffer) != -1) {
-					byteBuffer.rewind(); 	//The position is set to zero and the mark is discarded.
-					//                      Invoke this method before a sequence of get operations.
-					currentChar = byteBuffer.get(byteBuffer.position());
+		int c = getPreviousCharacter(1);
 
-					if(currentChar == '\n' || currentChar == '\r') {
-						break;
-					} else { }
-				}
-			} catch (IOException e) {
-				//Never(!) happens: main method should avoid any errors
-				System.out.println("I/O Exception: " + e);
-				return -1;
-			}
-			return position;
+		while ( c == '\n' || c == '\r') {
+			position--;
+			c = getPreviousCharacter(1);
 		}
+		while ( c != '\n' && c != '\r' ) {
+			position--;
+			if ( position == 0 ) {
+				break;
+			}
+			c = getPreviousCharacter(1);
+		}
+		return;
+
+}
+/*		long lineBeginPosition = position;
+if ( position <= 0 ) {
+setPosition(-1);
+return;
+// } else {
+ByteBuffer byteBuffer;
+try (FileChannel fileChannel = FileChannel.open(file, StandardOpenOption.READ)) {
+fileChannel.position(lineBeginPosition - 1);
+byteBuffer = ByteBuffer.allocate(1);
+int currentChar;
+
+while( true ) {
+System.out.println("position: " + fileChannel.position());
+fileChannel.read(byteBuffer);
+byteBuffer.rewind(); 	//The position is set to zero and the mark is discarded.
+//                      Invoke this method before a sequence of get operations.
+currentChar = byteBuffer.get(byteBuffer.position());
+if(currentChar == '\n' || currentChar == '\r' ) {
+lineBeginPosition = fileChannel.position();
+break;
+// } else {
+lineBeginPosition = lineBeginPosition - 2;
+fileChannel.position(lineBeginPosition);
+System.out.println("else: " + fileChannel.position()); } }
+position = lineBeginPosition;
+return; } catch (IOException e) {
+//Never(!) happens: main method should avoid any errors
+System.out.println("I/O Exception: " + e);
+position = -1;
+return; } } }
+*/
+
+private int getPreviousCharacter( int offset ){
+	ByteBuffer byteBuffer;
+	if (position - offset < 0) {
+		return -1;
+	}
+	try (FileChannel fileChannel = FileChannel.open(file, StandardOpenOption.READ)) {
+		byteBuffer = ByteBuffer.allocate(1);
+		int currentChar;
+
+		fileChannel.position(position - offset);
+		fileChannel.read(byteBuffer);
+		byteBuffer.rewind(); 	//The position is set to zero and the mark is discarded.
+		//                      Invoke this method before a sequence of get operations.
+		return byteBuffer.get(byteBuffer.position());
+
+	} catch (IOException e) {
+		//Never(!) happens: main method should avoid any errors
+		System.out.println("I/O Exception: " + e);
+		return -1;
 	}
 }
 
 
-/* commento al nextMessage:
-//TOCHANGE
-StringBuffer line = null;
-StringBuffer message = null; //TODO use the StringBuffer append(StringBuffer sb) method
-//to iteratively append the relevant lines to this message
-//
-//TODO: a while cycle which scans through the lines until it finds on that is the
-//start of an error message (using the method isStartOfMessage()). Then I will start
-//appending lines to the StringBuffer variable called message, until I find another
-//message. Then I will return message.toString().
-//
-
-do {
-line = readLine();
-} while (line != null || !isStartOfMessage(line));
-
-if(line == null) {
-return null; //TOCHECK
 }
-
-if(isStartOfMessage(line)) {
-do {
-message.append(line);
-line=readLine();
-}
-while (line != null || !isStartOfMessage(line));
-}
-
-return message.toString();
-/*		if(isStartOfMessage(line)) {
-*     return "line: " + line.toString() + ". Start of Message";
-*     } else {
-*     return "line: " + line.toString() + ". Not start of Message";
-*     }
-*/
