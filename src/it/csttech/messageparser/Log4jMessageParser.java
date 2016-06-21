@@ -29,14 +29,17 @@ public class Log4jMessageParser implements MessageParser {
 		StringBuffer message = new StringBuffer();
 		do {
 			line = readLine();
-			if ( ! isStartOfMessage(line) ) {
-				line = null;
-			} else { }
-		} while ( line == null );
-		message = message.append(line).append("\n");
+			if ( line == null) {
+				// Then it's EOF.
+				return null;
+			}
+		} while ( ! isStartOfMessage(line) ); // Start of message found!
+		message = message.append(line); //.append("\n");
 		while (true) {
 			line = readLine();
-			if ( line == null || isStartOfMessage(line) ) {
+			if ( line == null ) {
+				break;
+			} else if ( isStartOfMessage(line) ) {
 				break;
 			} else {
 				message = message.append(line).append("\n");
@@ -64,7 +67,7 @@ public class Log4jMessageParser implements MessageParser {
 
 			while(fileChannel.read(byteBuffer) != -1) {
 				byteBuffer.rewind(); 	//The position is set to zero and the mark is discarded.
-				//Invoke this method before a sequence of get operations.
+															//Invoke this method before a sequence of get operations.
 				currentChar = byteBuffer.get(byteBuffer.position());
 
 				if(currentChar == '\n' || currentChar == '\r') {
@@ -88,22 +91,23 @@ public class Log4jMessageParser implements MessageParser {
 				//TODO: l'ho tolto perché non mi è chiaro per niente, forse serve.
 				byteBuffer.rewind();
 				char nextChar = (char) fileChannel.read(byteBuffer);
-				/*				if(nextChar == '\n') {
-				*         //Then we found a '\r' followed by a '\n'
-				*         //we ignore it and increase the position by one
-				*         position = fileChannel.position();
-				*         } else {
-				*         //Then we had only found a '\r' and the next character is not '\n';
-				*         //Return to the previous position for the next read							// SamCle: why?
-				*         position--;
-				*/
+								if(nextChar == '\n') {
+				         //Then we found a '\r' followed by a '\n'
+				         //we ignore it and increase the position by one
+				         position = fileChannel.position();
+				         } else {
+				         //Then we had only found a '\r' and the next character is not '\n';
+				         //Return to the previous position for the next read							// SamCle: why?
+				         position--;
+							 }
+
 			}
 		} catch (IOException e) {
 			//Never(!) happens: main method should avoid any errors
 			System.out.println("I/O Exception: " + e);
 			return null;
 		}
-		position++; // This helps in poassing to the next line, otherwise this method would always stop at the same line.
+//		position++; // This helps in poassing to the next line, otherwise this method would always stop at the same line.
 		return line; //TOCHECK
 	}
 
