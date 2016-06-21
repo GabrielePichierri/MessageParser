@@ -44,7 +44,6 @@ public class Log4jMessageParser implements MessageParser {
 			}
 		}
 		return message.toString();
-
 	}
 
 	public String prevMessage() {
@@ -118,8 +117,8 @@ public class Log4jMessageParser implements MessageParser {
 		position = newPosition;
 	}
 
-	private long retrievePrevious(){ // TODO: finire
-		if ( position == 0 ) {
+	private long retrieveLineBeginPosition(){ // TODO: finire
+		if ( position <= 0 ) {
 			return -1;
 		} else {
 			ByteBuffer byteBuffer;
@@ -145,7 +144,6 @@ public class Log4jMessageParser implements MessageParser {
 			return position;
 		}
 	}
-
 }
 
 
