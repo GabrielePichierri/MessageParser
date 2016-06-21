@@ -23,8 +23,6 @@ public class Log4jMessageParser implements MessageParser {
 	}
 
 	public String nextMessage(){
-		// TODO: serve un campo per immagazzinare l'eventuale "a capo" da riportare
-
 		StringBuffer line = new StringBuffer();
 		StringBuffer message = new StringBuffer();
 		do {
@@ -34,7 +32,7 @@ public class Log4jMessageParser implements MessageParser {
 				return null;
 			}
 		} while ( ! isStartOfMessage(line) ); // Start of message found!
-		message = message.append(line); //.append("\n");
+		message = message.append(line);
 		while (true) {
 			line = readLine();
 			if ( line == null ) {
@@ -42,7 +40,7 @@ public class Log4jMessageParser implements MessageParser {
 			} else if ( isStartOfMessage(line) ) {
 				break;
 			} else {
-				message = message.append(line); //.append("\n");
+				message = message.append(line);
 			}
 		}
 		return message.toString();
@@ -67,12 +65,11 @@ public class Log4jMessageParser implements MessageParser {
 
 			while(fileChannel.read(byteBuffer) != -1) {
 				byteBuffer.rewind(); 	//The position is set to zero and the mark is discarded.
-															//Invoke this method before a sequence of get operations.
+				//                      Invoke this method before a sequence of get operations.
 				currentChar = byteBuffer.get(byteBuffer.position());
 
 				if(currentChar == '\n' || currentChar == '\r') {
 					line.append((char) currentChar);
-					System.out.println("Abbiamo trovato un a capo.");
 					break;
 				} else {
 					line.append((char) currentChar);
@@ -83,36 +80,29 @@ public class Log4jMessageParser implements MessageParser {
 				//Then it's the end of file; return null
 				return null;
 			}
+
 			//If it's not the end of file:
-			position = fileChannel.position();
-			System.out.println(fileChannel.position()); //TOREMOVE
-
-
-			if(currentChar == '\r') {
-			System.out.println("Questo a capo era di tipo r.");
-				//TODO: l'ho tolto perché non mi è chiaro per niente, forse serve.
+ 			if(currentChar == '\r') {
 				byteBuffer.rewind();
 				char nextChar = (char) fileChannel.read(byteBuffer);
-								if(nextChar == '\n') {
-									System.out.println("... seguito da un n.");
-				         //Then we found a '\r' followed by a '\n'
-				         //we ignore it and increase the position by one
-				         	} else {
-									 System.out.println("... non seguito da un n.");
-				         //Then we had only found a '\r' and the next character is not '\n';
-				         //Return to the previous position for the next read							// SamCle: why?
-				         // position--;
-				         fileChannel.position(fileChannel.position() - 1);
-							 }
-							 position = fileChannel.position();  //update this object's position with the fileChannel position
+				if(nextChar == '\n') {
+					//Then we found a '\r' followed by a '\n'
+					//we ignore it and increase the position by one
+				} else {
+					//Then we had only found a '\r' and the next character is not '\n';
+					//Return to the previous position for the next read
+					fileChannel.position(fileChannel.position() - 1);
+				}
 			}
+			
+			setPosition( fileChannel.position() );  //update this object's position with the fileChannel position
 		} catch (IOException e) {
 			//Never(!) happens: main method should avoid any errors
 			System.out.println("I/O Exception: " + e);
 			return null;
 		}
-		return line; //TOCHECK
-		}
+		return line;
+	}
 
 	private boolean isStartOfMessage(StringBuffer line) {
 		Pattern pattern = Pattern.compile(regex);
@@ -140,7 +130,7 @@ public class Log4jMessageParser implements MessageParser {
 
 				while(fileChannel.read(byteBuffer) != -1) {
 					byteBuffer.rewind(); 	//The position is set to zero and the mark is discarded.
-					//Invoke this method before a sequence of get operations.
+					//                      Invoke this method before a sequence of get operations.
 					currentChar = byteBuffer.get(byteBuffer.position());
 
 					if(currentChar == '\n' || currentChar == '\r') {
